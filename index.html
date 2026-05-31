@@ -327,7 +327,7 @@ async function analyze() {
 
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {  "Content-Type": "application/json", "anthropic-dangerous-direct-browser-access": "true" },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514", max_tokens: 5000,
         messages: [{ role: "user", content: `Eres experto en selección de personal de hostelería y restauración (sector QSR/restauración organizada). Analiza esta vacante y sus candidatos.
