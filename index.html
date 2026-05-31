@@ -7,7 +7,7 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: system-ui, -apple-system, sans-serif; background: #f8fafc; min-height: 100vh; }
-.app { max-width: 660px; margin: 0 auto; padding: 24px 16px; }
+.app { max-width: 860px; margin: 0 auto; padding: 24px 16px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .spinner { border-radius: 50%; border: 2px solid #e2e8f0; border-top-color: #E8416B; animation: spin 0.7s linear infinite; display: inline-block; flex-shrink: 0; }
 .jrow { display: flex; align-items: center; justify-content: space-between; padding: 11px 14px; border-radius: 10px; border: 0.5px solid #e2e8f0; background: white; cursor: pointer; transition: all 0.15s; margin-bottom: 6px; }
@@ -22,7 +22,6 @@ body { font-family: system-ui, -apple-system, sans-serif; background: #f8fafc; m
 .card { background: white; border: 0.5px solid #e2e8f0; border-radius: 12px; padding: 18px 20px; margin-bottom: 10px; }
 .card.top { border-color: #E8416B; }
 .error-box { background: #fef2f2; border: 0.5px solid #fca5a5; border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #991b1b; margin-bottom: 16px; }
-.profile-box { background: #fce8ee; border: 0.5px solid #E8416B; border-radius: 10px; padding: 12px 16px; margin-bottom: 20px; }
 .tag { font-size: 12px; padding: 3px 10px; border-radius: 20px; display: inline-block; margin: 3px; }
 .tag.pro { background: #f0fdf4; border: 0.5px solid #86efac; color: #166534; }
 .tag.con { background: #fef2f2; border: 0.5px solid #fca5a5; color: #991b1b; }
@@ -38,6 +37,15 @@ input:focus { outline: 2px solid #E8416B; outline-offset: 1px; }
 .hidden { display: none !important; }
 .group-label { font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; margin-top: 4px; }
 .step-dot { width: 22px; height: 22px; border-radius: 50%; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; }
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+@media (max-width: 600px) { .info-grid { grid-template-columns: 1fr; } }
+.info-panel { background: white; border: 0.5px solid #e2e8f0; border-radius: 12px; padding: 18px 20px; }
+.info-panel h3 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; display: flex; align-items: center; gap: 6px; }
+.info-panel ul { list-style: none; padding: 0; }
+.info-panel ul li { font-size: 13px; color: #475569; line-height: 1.6; padding: 4px 0; border-bottom: 0.5px solid #f1f5f9; display: flex; align-items: flex-start; gap: 8px; }
+.info-panel ul li:last-child { border-bottom: none; }
+.info-panel ul li::before { content: "·"; color: #E8416B; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+.qsr-badge { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; padding: 2px 7px; border-radius: 20px; background: #fff7ed; color: #c2410c; border: 0.5px solid #fed7aa; margin-left: 6px; vertical-align: middle; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -107,17 +115,31 @@ input:focus { outline: 2px solid #E8416B; outline-offset: 1px; }
 
   <!-- SCREEN: RESULTS -->
   <div id="screenResults" class="hidden">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+    <!-- Cabecera vacante -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
       <div>
-        <div id="resultsTitle" style="font-size:15px;font-weight:600;color:#0f172a"></div>
-        <div id="resultsCount" style="font-size:12px;color:#94a3b8;margin-top:2px"></div>
+        <div id="resultsTitle" style="font-size:18px;font-weight:700;color:#0f172a"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+          <div id="resultsCompany"></div>
+          <div id="resultsCount" style="font-size:12px;color:#94a3b8"></div>
+        </div>
       </div>
-      <div id="resultsCompany"></div>
     </div>
-    <div id="profileBox" class="hidden profile-box">
-      <div style="font-size:10px;font-weight:700;color:#c02d56;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">Perfil ideal · extraído de la vacante</div>
-      <div id="profileText" style="font-size:13px;color:#c02d56;line-height:1.65"></div>
+
+    <!-- Info panels: requisitos + ofrecemos -->
+    <div class="info-grid" id="infoPanels" style="display:none">
+      <div class="info-panel">
+        <h3 style="color:#E8416B">🎯 Buscamos</h3>
+        <ul id="listRequisitos"></ul>
+      </div>
+      <div class="info-panel">
+        <h3 style="color:#0f172a">✨ Ofrecemos</h3>
+        <ul id="listOfrece"></ul>
+      </div>
     </div>
+
+    <!-- Ranking candidatos -->
+    <div style="font-size:12px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px">Ranking de candidatos</div>
     <div id="resultsList"></div>
   </div>
 
@@ -130,11 +152,17 @@ let allJobs = [];
 let selectedJob = null;
 let currentFilter = "Todas";
 
+const QSR_BRANDS = ["mcdonald","burger king","kfc","telepizza","domino","subway","five guys","taco bell","popeyes","papa john","pizza hut","foster's hollywood","vips","goiko","nando","wingstop","cuyna","restalia","alsea","amrest","autogrill","eurest","compass","sodexo","areas","lagardere","SSP","casualfood","llano","udon","nostrum","pans","100 montaditos","cervecería","la tagliatella","wagamama","foster","tim horton","dunkin","starbucks","fridays","applebee","chili's","hard rock","señor taco","grupo zena","taberna","lizarran","cantina mariachi","rodilla"];
+
+function hasQSR(text) {
+  const t = (text || "").toLowerCase();
+  return QSR_BRANDS.some(b => t.includes(b));
+}
+
 function getCompany(job) {
   const t = (job.attributes?.title || "").toLowerCase();
   const l = (job.attributes?.["human-readable-location"] || "").toLowerCase();
-  const d = (job._dept || "").toLowerCase();
-  const all = t + " " + l + " " + d;
+  const all = t + " " + l;
   if (all.includes("wingstop")) return "Wingstop España";
   if (all.includes("cuyna")) return "Cuyna";
   return "Otras";
@@ -165,10 +193,6 @@ function showScreen(name) {
 }
 
 function setStep(n) {
-  const configs = [
-    { dot: { bg:"#E8416B",color:"white",border:"#E8416B" }, text: { color:"#E8416B",weight:"500" } },
-    { dot: { bg:"#f1f5f9",color:"#94a3b8",border:"#e2e8f0" }, text: { color:"#94a3b8",weight:"400" } },
-  ];
   [1,2,3].forEach(i => {
     const s = document.getElementById("step"+i);
     if (!s) return;
@@ -199,22 +223,15 @@ async function connect() {
   document.getElementById("loadingJobs").classList.remove("hidden");
   document.getElementById("jobsContent").classList.add("hidden");
   try {
-    const r = await fetch(`${TT_BASE}/jobs?page[size]=100&include=department`, {
+    const r = await fetch(`${TT_BASE}/jobs?page[size]=100`, {
       headers: { "Authorization": `Token token=${apiKey}`, "X-Api-Version": "20161108" }
     });
     if (!r.ok) throw new Error("Error " + r.status);
     const data = await r.json();
-    const included = data.included || [];
-    allJobs = (data.data || [])
-      .filter(j => {
-        const t = (j.attributes?.title || "").toLowerCase();
-        return !t.includes("not a real job") && !t.includes("test");
-      })
-      .map(job => {
-        const deptRel = job.relationships?.department?.data;
-        const dept = included.find(i => i.type === "departments" && i.id === deptRel?.id);
-        return { ...job, _dept: dept?.attributes?.name || "" };
-      });
+    allJobs = (data.data || []).filter(j => {
+      const t = (j.attributes?.title || "").toLowerCase();
+      return !t.includes("not a real job") && !t.includes("test");
+    });
     renderJobs();
     document.getElementById("loadingJobs").classList.add("hidden");
     document.getElementById("jobsContent").classList.remove("hidden");
@@ -294,11 +311,6 @@ async function analyze() {
     const apps = appsData.data || [];
     const included = appsData.included || [];
 
-    if (!apps.length) {
-      renderResults(title, "", [], 0);
-      return;
-    }
-
     const candidates = apps.map(app => {
       const rel = app.relationships?.candidate?.data;
       const cand = included.find(i => i.type === "candidates" && i.id === rel?.id);
@@ -317,10 +329,10 @@ async function analyze() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514", max_tokens: 4000,
-        messages: [{ role: "user", content: `Eres experto en selección de personal de hostelería y restauración. Analiza estos candidatos para la vacante "${title}".
+        model: "claude-sonnet-4-20250514", max_tokens: 5000,
+        messages: [{ role: "user", content: `Eres experto en selección de personal de hostelería y restauración (sector QSR/restauración organizada). Analiza esta vacante y sus candidatos.
 
-DESCRIPCIÓN DE LA VACANTE (extrae de aquí el perfil ideal):
+DESCRIPCIÓN DE LA VACANTE:
 ${description || "(sin descripción disponible)"}
 
 CANDIDATOS (${candidates.length}):
@@ -331,31 +343,54 @@ Carta: ${c.coverLetter || "No disponible"}
 Tags: ${c.tags || "Ninguno"}`).join("\n\n")}
 
 Responde SOLO con JSON válido, sin texto extra, sin backticks:
-{"profile_summary":"resumen 2-3 frases del perfil ideal","candidates":[{"name":"nombre","email":"email","score":85,"summary":"evaluación 2-3 frases","pros":["fortaleza"],"cons":["debilidad"]}]}
-Ordena candidatos por score descendente.` }]
+{
+  "requisitos": ["requisito 1 extraído de la descripción", "requisito 2", "requisito 3", "..."],
+  "ofrecemos": ["beneficio 1 extraído de la descripción", "beneficio 2", "..."],
+  "candidates": [
+    {
+      "name": "nombre",
+      "email": "email",
+      "score": 85,
+      "summary": "2-3 frases evaluando el encaje del candidato con el perfil",
+      "pros": ["fortaleza relevante"],
+      "cons": ["punto débil o info que falta"],
+      "qsr_experience": true,
+      "qsr_brands": ["marca QSR donde ha trabajado si se menciona"]
+    }
+  ]
+}
+- requisitos: lista de 4-7 puntos clave que se buscan en el candidato
+- ofrecemos: lista de 3-6 beneficios o condiciones que ofrece el puesto
+- qsr_experience: true si el candidato menciona experiencia en restauración organizada, cadenas de comida rápida, QSR o marcas conocidas del sector
+- Ordena candidatos por score descendente` }]
       })
     });
     const rd = await r.json();
     const raw = (rd.content?.[0]?.text || "{}").replace(/```json|```/g,"").trim();
     const parsed = JSON.parse(raw);
-    renderResults(title, parsed.profile_summary || "", parsed.candidates || [], apps.length);
+    renderResults(title, parsed);
   } catch(e) {
     showError("Error: " + e.message);
     showScreen("jobs");
   }
 }
 
-function renderResults(title, profileSummary, candidates, total) {
+function renderResults(title, parsed) {
+  const candidates = parsed.candidates || [];
+  const co = getCompany(selectedJob);
+
   document.getElementById("resultsTitle").textContent = title;
   document.getElementById("resultsCount").textContent = `${candidates.length} candidato${candidates.length !== 1?"s":""} analizados`;
-  const co = getCompany(selectedJob);
   document.getElementById("resultsCompany").innerHTML = `<span class="company-pill ${companyClass(co)}">${co}</span>`;
 
-  const profileBox = document.getElementById("profileBox");
-  if (profileSummary) {
-    document.getElementById("profileText").textContent = profileSummary;
-    profileBox.classList.remove("hidden");
-  } else { profileBox.classList.add("hidden"); }
+  // Info panels
+  const requisitos = parsed.requisitos || [];
+  const ofrecemos = parsed.ofrecemos || [];
+  if (requisitos.length || ofrecemos.length) {
+    document.getElementById("infoPanels").style.display = "grid";
+    document.getElementById("listRequisitos").innerHTML = requisitos.map(r => `<li>${r}</li>`).join("");
+    document.getElementById("listOfrece").innerHTML = ofrecemos.map(o => `<li>${o}</li>`).join("");
+  }
 
   const rankLabels = ["1.ª opción","2.ª opción","3.ª opción"];
   const rankBg = ["#fce8ee","#f0fdf4","#f8fafc"];
@@ -370,6 +405,9 @@ function renderResults(title, profileSummary, candidates, total) {
   candidates.forEach((c, i) => {
     const initials = c.name.split(" ").map(n=>n[0]).filter(Boolean).join("").slice(0,2).toUpperCase();
     const ri = Math.min(i,2);
+    const qsrBadge = c.qsr_experience
+      ? `<span class="qsr-badge">🍔 QSR${c.qsr_brands?.length ? ": " + c.qsr_brands.join(", ") : ""}</span>`
+      : "";
     const card = document.createElement("div");
     card.className = "card" + (i===0?" top":"");
     card.innerHTML = `
@@ -379,7 +417,8 @@ function renderResults(title, profileSummary, candidates, total) {
           <div>
             <div style="font-size:15px;font-weight:600;color:#0f172a">
               ${c.name}
-              <span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;background:${rankBg[ri]};color:${rankColor[ri]};margin-left:8px;vertical-align:middle">${i<3?rankLabels[i]:"#"+(i+1)}</span>
+              <span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;background:${rankBg[ri]};color:${rankColor[ri]};margin-left:6px;vertical-align:middle">${i<3?rankLabels[i]:"#"+(i+1)}</span>
+              ${qsrBadge}
             </div>
             <div style="font-size:12px;color:#94a3b8;margin-top:1px">${c.email}</div>
           </div>
@@ -399,9 +438,15 @@ function renderResults(title, profileSummary, candidates, total) {
   showScreen("results");
 }
 
-function goBack() { showScreen("jobs"); selectedJob = null; document.getElementById("btnAnalizar").disabled = true; renderJobs(); }
+function goBack() {
+  showScreen("jobs");
+  selectedJob = null;
+  document.getElementById("btnAnalizar").disabled = true;
+  document.getElementById("infoPanels").style.display = "none";
+  document.getElementById("resultsList").innerHTML = "";
+  renderJobs();
+}
 
-// Auto-connect on load
 window.onload = () => connect();
 </script>
 </body>
