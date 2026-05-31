@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Asistente de Recruiting</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, -apple-system, sans-serif; background: #f8fafc; min-height: 100vh; }
+.app { max-width: 660px; margin: 0 auto; padding: 24px 16px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner { border-radius: 50%; border: 2px solid #e2e8f0; border-top-color: #E8416B; animation: spin 0.7s linear infinite; display: inline-block; flex-shrink: 0; }
+.jrow { display: flex; align-items: center; justify-content: space-between; padding: 11px 14px; border-radius: 10px; border: 0.5px solid #e2e8f0; background: white; cursor: pointer; transition: all 0.15s; margin-bottom: 6px; }
+.jrow:hover { border-color: #E8416B; }
+.jrow.selected { border-color: #E8416B; background: #fce8ee; }
+.btn-primary { background: #E8416B; color: white; border: none; border-radius: 10px; padding: 12px 24px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s; font-family: inherit; }
+.btn-primary:hover { background: #c02d56; }
+.btn-primary:disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; }
+.btn-ghost { font-size: 13px; padding: 6px 14px; border-radius: 8px; border: 0.5px solid #e2e8f0; background: transparent; cursor: pointer; color: #64748b; font-family: inherit; }
+.filter-btn { font-size: 13px; padding: 6px 16px; border-radius: 20px; cursor: pointer; border: 1.5px solid #e2e8f0; background: white; color: #64748b; font-weight: 400; transition: all 0.15s; font-family: inherit; }
+.filter-btn.active { border-color: #E8416B; background: #E8416B; color: white; font-weight: 600; }
+.card { background: white; border: 0.5px solid #e2e8f0; border-radius: 12px; padding: 18px 20px; margin-bottom: 10px; }
+.card.top { border-color: #E8416B; }
+.error-box { background: #fef2f2; border: 0.5px solid #fca5a5; border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #991b1b; margin-bottom: 16px; }
+.profile-box { background: #fce8ee; border: 0.5px solid #E8416B; border-radius: 10px; padding: 12px 16px; margin-bottom: 20px; }
+.tag { font-size: 12px; padding: 3px 10px; border-radius: 20px; display: inline-block; margin: 3px; }
+.tag.pro { background: #f0fdf4; border: 0.5px solid #86efac; color: #166534; }
+.tag.con { background: #fef2f2; border: 0.5px solid #fca5a5; color: #991b1b; }
+.company-pill { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; display: inline-block; }
+.company-cuyna { background: #fce8ee; color: #c02d56; border: 0.5px solid #f9a8c1; }
+.company-wingstop { background: #fff7ed; color: #9a3412; border: 0.5px solid #fed7aa; }
+.company-otras { background: #f8fafc; color: #475569; border: 0.5px solid #e2e8f0; }
+.avatar { width: 40px; height: 40px; border-radius: 50%; background: #fce8ee; color: #c02d56; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; }
+.score-bar-bg { height: 3px; background: #f1f5f9; border-radius: 2px; margin: 10px 0 12px; overflow: hidden; }
+.score-bar { height: 100%; border-radius: 2px; }
+input[type=text], input[type=password] { font-size: 14px; padding: 10px 14px; border-radius: 8px; border: 0.5px solid #e2e8f0; font-family: monospace; width: 100%; }
+input:focus { outline: 2px solid #E8416B; outline-offset: 1px; }
+.hidden { display: none !important; }
+.group-label { font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; margin-top: 4px; }
+.step-dot { width: 22px; height: 22px; border-radius: 50%; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+    <div style="width:38px;height:38px;border-radius:10px;background:#E8416B;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:14px;flex-shrink:0">TT</div>
+    <div>
+      <div style="font-size:16px;font-weight:600;color:#0f172a">Asistente de Recruiting</div>
+      <div style="font-size:12px;color:#94a3b8">Teamtailor · Cuyna & Wingstop España</div>
+    </div>
+    <button id="btnVolver" class="btn-ghost hidden" onclick="goBack()" style="margin-left:auto">← Volver</button>
+  </div>
+
+  <!-- STEPS -->
+  <div id="steps" style="display:flex;align-items:center;gap:6px;margin-bottom:24px" class="hidden">
+    <div id="step1" style="display:flex;align-items:center;gap:6px">
+      <div class="step-dot" style="background:#E8416B;color:white;border:1.5px solid #E8416B">1</div>
+      <span style="font-size:13px;color:#E8416B;font-weight:500">Elegir vacante</span>
+    </div>
+    <div style="width:28px;height:1px;background:#e2e8f0;margin:0 2px"></div>
+    <div id="step2" style="display:flex;align-items:center;gap:6px">
+      <div class="step-dot" style="background:#f1f5f9;color:#94a3b8;border:1.5px solid #e2e8f0">2</div>
+      <span style="font-size:13px;color:#94a3b8">Analizando</span>
+    </div>
+    <div style="width:28px;height:1px;background:#e2e8f0;margin:0 2px"></div>
+    <div id="step3" style="display:flex;align-items:center;gap:6px">
+      <div class="step-dot" style="background:#f1f5f9;color:#94a3b8;border:1.5px solid #e2e8f0">3</div>
+      <span style="font-size:13px;color:#94a3b8">Ranking</span>
+    </div>
+  </div>
+
+  <div id="errorBox" class="error-box hidden"></div>
+
+  <!-- SCREEN: API KEY -->
+  <div id="screenKey">
+    <div style="background:white;border:0.5px solid #e2e8f0;border-radius:12px;padding:24px">
+      <div style="font-size:13px;color:#64748b;margin-bottom:12px">API Key de Teamtailor</div>
+      <div style="display:flex;gap:10px">
+        <input type="password" id="apiKeyInput" value="hfk6D2a3pAhT8r2JyO7aJJEhPrbVMxXXRzht2ykK" onkeydown="if(event.key==='Enter') connect()" />
+        <button class="btn-primary" onclick="connect()" style="white-space:nowrap;border-radius:8px">Conectar →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN: JOBS -->
+  <div id="screenJobs" class="hidden">
+    <div id="loadingJobs" style="display:flex;align-items:center;gap:10px;color:#94a3b8;font-size:14px;padding:20px 0">
+      <div class="spinner" style="width:16px;height:16px"></div> Cargando vacantes...
+    </div>
+    <div id="jobsContent" class="hidden">
+      <div id="filterBtns" style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap"></div>
+      <div id="jobsList"></div>
+      <button class="btn-primary" id="btnAnalizar" onclick="analyze()" disabled style="margin-top:4px">Analizar candidatos →</button>
+    </div>
+  </div>
+
+  <!-- SCREEN: LOADING -->
+  <div id="screenLoading" class="hidden" style="text-align:center;padding:48px 0">
+    <div style="display:flex;justify-content:center;margin-bottom:20px">
+      <div class="spinner" style="width:36px;height:36px;border-width:3px"></div>
+    </div>
+    <div id="loadingTitle" style="font-size:15px;font-weight:500;color:#0f172a;margin-bottom:6px"></div>
+    <div id="loadingStatus" style="font-size:13px;color:#94a3b8"></div>
+  </div>
+
+  <!-- SCREEN: RESULTS -->
+  <div id="screenResults" class="hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div>
+        <div id="resultsTitle" style="font-size:15px;font-weight:600;color:#0f172a"></div>
+        <div id="resultsCount" style="font-size:12px;color:#94a3b8;margin-top:2px"></div>
+      </div>
+      <div id="resultsCompany"></div>
+    </div>
+    <div id="profileBox" class="hidden profile-box">
+      <div style="font-size:10px;font-weight:700;color:#c02d56;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">Perfil ideal · extraído de la vacante</div>
+      <div id="profileText" style="font-size:13px;color:#c02d56;line-height:1.65"></div>
+    </div>
+    <div id="resultsList"></div>
+  </div>
+
+</div>
+
+<script>
+const TT_BASE = "https://api.teamtailor.com/v1";
+let apiKey = "hfk6D2a3pAhT8r2JyO7aJJEhPrbVMxXXRzht2ykK";
+let allJobs = [];
+let selectedJob = null;
+let currentFilter = "Todas";
+
+function getCompany(job) {
+  const t = (job.attributes?.title || "").toLowerCase();
+  const l = (job.attributes?.["human-readable-location"] || "").toLowerCase();
+  const d = (job._dept || "").toLowerCase();
+  const all = t + " " + l + " " + d;
+  if (all.includes("wingstop")) return "Wingstop España";
+  if (all.includes("cuyna")) return "Cuyna";
+  return "Otras";
+}
+
+function companyClass(name) {
+  if (!name) return "company-otras";
+  if (name.toLowerCase().includes("wingstop")) return "company-wingstop";
+  if (name.toLowerCase().includes("cuyna")) return "company-cuyna";
+  return "company-otras";
+}
+
+function showError(msg) {
+  const el = document.getElementById("errorBox");
+  el.textContent = "⚠ " + msg;
+  el.classList.remove("hidden");
+}
+function hideError() { document.getElementById("errorBox").classList.add("hidden"); }
+
+function showScreen(name) {
+  ["screenKey","screenJobs","screenLoading","screenResults"].forEach(id => {
+    document.getElementById(id).classList.add("hidden");
+  });
+  document.getElementById("screen" + name[0].toUpperCase() + name.slice(1)).classList.remove("hidden");
+  document.getElementById("steps").classList.toggle("hidden", name === "key");
+  document.getElementById("btnVolver").classList.toggle("hidden", name !== "results");
+  setStep(name === "jobs" ? 1 : name === "loading" ? 2 : name === "results" ? 3 : 0);
+}
+
+function setStep(n) {
+  const configs = [
+    { dot: { bg:"#E8416B",color:"white",border:"#E8416B" }, text: { color:"#E8416B",weight:"500" } },
+    { dot: { bg:"#f1f5f9",color:"#94a3b8",border:"#e2e8f0" }, text: { color:"#94a3b8",weight:"400" } },
+  ];
+  [1,2,3].forEach(i => {
+    const s = document.getElementById("step"+i);
+    if (!s) return;
+    const done = i < n, active = i === n;
+    const dot = s.querySelector(".step-dot");
+    const span = s.querySelector("span");
+    if (done) {
+      dot.style.cssText = `background:#22c55e;color:white;border:1.5px solid #22c55e`;
+      dot.textContent = "✓";
+      span.style.color = "#64748b"; span.style.fontWeight = "400";
+    } else if (active) {
+      dot.style.cssText = `background:#E8416B;color:white;border:1.5px solid #E8416B`;
+      dot.textContent = i;
+      span.style.color = "#E8416B"; span.style.fontWeight = "500";
+    } else {
+      dot.style.cssText = `background:#f1f5f9;color:#94a3b8;border:1.5px solid #e2e8f0`;
+      dot.textContent = i;
+      span.style.color = "#94a3b8"; span.style.fontWeight = "400";
+    }
+  });
+}
+
+async function connect() {
+  apiKey = document.getElementById("apiKeyInput").value.trim();
+  if (!apiKey) return;
+  hideError();
+  showScreen("jobs");
+  document.getElementById("loadingJobs").classList.remove("hidden");
+  document.getElementById("jobsContent").classList.add("hidden");
+  try {
+    const r = await fetch(`${TT_BASE}/jobs?page[size]=100&include=department`, {
+      headers: { "Authorization": `Token token=${apiKey}`, "X-Api-Version": "20161108" }
+    });
+    if (!r.ok) throw new Error("Error " + r.status);
+    const data = await r.json();
+    const included = data.included || [];
+    allJobs = (data.data || [])
+      .filter(j => {
+        const t = (j.attributes?.title || "").toLowerCase();
+        return !t.includes("not a real job") && !t.includes("test");
+      })
+      .map(job => {
+        const deptRel = job.relationships?.department?.data;
+        const dept = included.find(i => i.type === "departments" && i.id === deptRel?.id);
+        return { ...job, _dept: dept?.attributes?.name || "" };
+      });
+    renderJobs();
+    document.getElementById("loadingJobs").classList.add("hidden");
+    document.getElementById("jobsContent").classList.remove("hidden");
+  } catch(e) {
+    showError(e.message);
+    showScreen("key");
+  }
+}
+
+function renderJobs() {
+  const companies = ["Todas", ...Array.from(new Set(allJobs.map(getCompany))).sort()];
+  const filterDiv = document.getElementById("filterBtns");
+  filterDiv.innerHTML = "";
+  companies.forEach(co => {
+    const btn = document.createElement("button");
+    btn.className = "filter-btn" + (co === currentFilter ? " active" : "");
+    btn.textContent = co;
+    btn.onclick = () => { currentFilter = co; renderJobs(); };
+    filterDiv.appendChild(btn);
+  });
+
+  const filtered = allJobs.filter(j => currentFilter === "Todas" || getCompany(j) === currentFilter);
+  const grouped = filtered.reduce((acc, j) => {
+    const co = getCompany(j); if (!acc[co]) acc[co] = []; acc[co].push(j); return acc;
+  }, {});
+
+  const list = document.getElementById("jobsList");
+  list.innerHTML = "";
+  Object.entries(grouped).forEach(([company, jobs]) => {
+    const label = document.createElement("div");
+    label.className = "group-label";
+    label.textContent = company;
+    list.appendChild(label);
+    jobs.forEach(job => {
+      const co = getCompany(job);
+      const sel = selectedJob?.id === job.id;
+      const row = document.createElement("div");
+      row.className = "jrow" + (sel ? " selected" : "");
+      row.innerHTML = `
+        <div>
+          <div style="font-size:14px;font-weight:500;color:${sel?"#c02d56":"#0f172a"}">${job.attributes.title}</div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:3px;display:flex;gap:6px;align-items:center">
+            <span class="company-pill ${companyClass(co)}">${co}</span>
+            ${job.attributes?.["human-readable-location"] ? `<span>${job.attributes["human-readable-location"]}</span>` : ""}
+          </div>
+        </div>
+        ${sel ? `<span style="color:#E8416B;font-size:18px">✓</span>` : ""}
+      `;
+      row.onclick = () => { selectedJob = job; document.getElementById("btnAnalizar").disabled = false; renderJobs(); };
+      list.appendChild(row);
+    });
+  });
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div style="font-size:13px;color:#94a3b8;padding:12px 0">No hay vacantes para este filtro.</div>`;
+  }
+}
+
+async function analyze() {
+  if (!selectedJob) return;
+  hideError();
+  showScreen("loading");
+  document.getElementById("loadingTitle").textContent = selectedJob.attributes.title;
+
+  const jobId = selectedJob.id;
+  const title = selectedJob.attributes?.title || "";
+  const headers = { "Authorization": `Token token=${apiKey}`, "X-Api-Version": "20161108" };
+
+  try {
+    document.getElementById("loadingStatus").textContent = "Leyendo descripción de la vacante...";
+    const jobData = await fetch(`${TT_BASE}/jobs/${jobId}`, { headers }).then(r => r.json());
+    const ja = jobData.data?.attributes || {};
+    const description = [ja.pitch, ja.body].filter(Boolean).join("\n\n");
+
+    document.getElementById("loadingStatus").textContent = "Cargando candidatos...";
+    const appsData = await fetch(`${TT_BASE}/job-applications?filter[job]=${jobId}&page[size]=100&include=candidate`, { headers }).then(r => r.json());
+    const apps = appsData.data || [];
+    const included = appsData.included || [];
+
+    if (!apps.length) {
+      renderResults(title, "", [], 0);
+      return;
+    }
+
+    const candidates = apps.map(app => {
+      const rel = app.relationships?.candidate?.data;
+      const cand = included.find(i => i.type === "candidates" && i.id === rel?.id);
+      const a = cand?.attributes || {};
+      return {
+        name: [a["first-name"], a["last-name"]].filter(Boolean).join(" ") || a.email?.split("@")[0] || "Candidato",
+        email: a.email || "", pitch: a.pitch || "",
+        coverLetter: app.attributes?.["cover-letter"] || "",
+        tags: (a.tags || []).join(", "),
+      };
+    });
+
+    document.getElementById("loadingStatus").textContent = `Analizando ${candidates.length} candidatos con IA...`;
+
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514", max_tokens: 4000,
+        messages: [{ role: "user", content: `Eres experto en selección de personal de hostelería y restauración. Analiza estos candidatos para la vacante "${title}".
+
+DESCRIPCIÓN DE LA VACANTE (extrae de aquí el perfil ideal):
+${description || "(sin descripción disponible)"}
+
+CANDIDATOS (${candidates.length}):
+${candidates.map((c, i) => `--- ${i+1}. ${c.name} ---
+Email: ${c.email}
+Bio: ${c.pitch || "No disponible"}
+Carta: ${c.coverLetter || "No disponible"}
+Tags: ${c.tags || "Ninguno"}`).join("\n\n")}
+
+Responde SOLO con JSON válido, sin texto extra, sin backticks:
+{"profile_summary":"resumen 2-3 frases del perfil ideal","candidates":[{"name":"nombre","email":"email","score":85,"summary":"evaluación 2-3 frases","pros":["fortaleza"],"cons":["debilidad"]}]}
+Ordena candidatos por score descendente.` }]
+      })
+    });
+    const rd = await r.json();
+    const raw = (rd.content?.[0]?.text || "{}").replace(/```json|```/g,"").trim();
+    const parsed = JSON.parse(raw);
+    renderResults(title, parsed.profile_summary || "", parsed.candidates || [], apps.length);
+  } catch(e) {
+    showError("Error: " + e.message);
+    showScreen("jobs");
+  }
+}
+
+function renderResults(title, profileSummary, candidates, total) {
+  document.getElementById("resultsTitle").textContent = title;
+  document.getElementById("resultsCount").textContent = `${candidates.length} candidato${candidates.length !== 1?"s":""} analizados`;
+  const co = getCompany(selectedJob);
+  document.getElementById("resultsCompany").innerHTML = `<span class="company-pill ${companyClass(co)}">${co}</span>`;
+
+  const profileBox = document.getElementById("profileBox");
+  if (profileSummary) {
+    document.getElementById("profileText").textContent = profileSummary;
+    profileBox.classList.remove("hidden");
+  } else { profileBox.classList.add("hidden"); }
+
+  const rankLabels = ["1.ª opción","2.ª opción","3.ª opción"];
+  const rankBg = ["#fce8ee","#f0fdf4","#f8fafc"];
+  const rankColor = ["#c02d56","#166534","#475569"];
+  const list = document.getElementById("resultsList");
+  list.innerHTML = "";
+
+  if (!candidates.length) {
+    list.innerHTML = `<div style="font-size:14px;color:#94a3b8;padding:24px 0">No hay candidatos en esta vacante todavía.</div>`;
+  }
+
+  candidates.forEach((c, i) => {
+    const initials = c.name.split(" ").map(n=>n[0]).filter(Boolean).join("").slice(0,2).toUpperCase();
+    const ri = Math.min(i,2);
+    const card = document.createElement("div");
+    card.className = "card" + (i===0?" top":"");
+    card.innerHTML = `
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="avatar">${initials}</div>
+          <div>
+            <div style="font-size:15px;font-weight:600;color:#0f172a">
+              ${c.name}
+              <span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;background:${rankBg[ri]};color:${rankColor[ri]};margin-left:8px;vertical-align:middle">${i<3?rankLabels[i]:"#"+(i+1)}</span>
+            </div>
+            <div style="font-size:12px;color:#94a3b8;margin-top:1px">${c.email}</div>
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:26px;font-weight:700;color:${i===0?"#E8416B":"#334155"};line-height:1">${c.score}</div>
+          <div style="font-size:11px;color:#94a3b8">/ 100</div>
+        </div>
+      </div>
+      <div class="score-bar-bg"><div class="score-bar" style="width:${c.score}%;background:${i===0?"#E8416B":"#94a3b8"}"></div></div>
+      <div style="font-size:13px;color:#64748b;line-height:1.65;margin-bottom:10px">${c.summary}</div>
+      <div>${(c.pros||[]).map(p=>`<span class="tag pro">✓ ${p}</span>`).join("")}${(c.cons||[]).map(p=>`<span class="tag con">✗ ${p}</span>`).join("")}</div>
+    `;
+    list.appendChild(card);
+  });
+
+  showScreen("results");
+}
+
+function goBack() { showScreen("jobs"); selectedJob = null; document.getElementById("btnAnalizar").disabled = true; renderJobs(); }
+
+// Auto-connect on load
+window.onload = () => connect();
+</script>
+</body>
+</html>
