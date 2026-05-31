@@ -223,7 +223,7 @@ async function connect() {
   document.getElementById("loadingJobs").classList.remove("hidden");
   document.getElementById("jobsContent").classList.add("hidden");
   try {
-    const r = await fetch(`${TT_BASE}/jobs?page[size]=100`, {
+    const r = await fetch(`${TT_BASE}/jobs?page[size]=30`, {
       headers: { "Authorization": `Token token=${apiKey}`, "X-Api-Version": "20161108" }
     });
     if (!r.ok) throw new Error("Error " + r.status);
@@ -307,7 +307,7 @@ async function analyze() {
     const description = [ja.pitch, ja.body].filter(Boolean).join("\n\n");
 
     document.getElementById("loadingStatus").textContent = "Cargando candidatos...";
-    const appsData = await fetch(`${TT_BASE}/job-applications?filter[job]=${jobId}&page[size]=100&include=candidate`, { headers }).then(r => r.json());
+    const appsData = await fetch(`${TT_BASE}/job-applications?filter[job]=${jobId}&page[size]=30&include=candidate`, { headers }).then(r => r.json());
     const apps = appsData.data || [];
     const included = appsData.included || [];
 
